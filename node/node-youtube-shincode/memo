@@ -1,0 +1,161 @@
+
+## 🟦 Node.js 学習メモ（2025/4/16 20:18〜21:16）  
+📺 参考動画: [Node.js講座 #2 by Shincode](https://www.youtube.com/watch?v=nSXnif14lVo&list=PLT5klp7W4r8T3DAvFEG6T-xF9j9uKcWyB&index=2)  
+
+---
+
+### 🧠 Node.js とは？
+- サーバーサイドの JavaScript 実行環境。
+- クライアント側（フロント）もサーバー側（バック）も JavaScript で構築できる。
+- Webサーバーをコードで作れるのが特徴。
+
+---
+
+### 🛠 Node.js の準備
+1. Node.js をインストールする（例：Nodebrew または公式サイトから）。
+2. インストール後は以下が使えるようになる：
+   - `node`: JavaScript を実行する
+   - `npm`: パッケージ管理ツール
+   - `npm -v`: npmのバージョン確認
+
+---
+
+### 📦 `package.json` の作成
+```bash
+npm init -y
+```
+- プロジェクトの基本情報を管理するファイルが自動生成される。
+
+---
+
+### 🗂 server.js の作成と実行
+```bash
+touch server.js
+node server.js
+```
+- `console.log` などで、ちゃんと実行できるか確認する。
+
+---
+
+### 📥 必要なモジュールのインストール
+```bash
+npm install --save-dev http
+```
+- `http` モジュールを試したいから。  
+- `package.json` の `devDependencies` に追加される。
+
+---
+
+### ⚙️ スクリプトの設定（開発用）
+```json
+"scripts": {
+  "dev": "nodemon server.js"
+}
+```
+- `npm run dev` でサーバーを自動再起動つきで実行できるように。
+
+---
+
+### 📄 `server.js` に記述していく内容
+
+#### 1. 必要モジュールを読み込む
+```js
+const http = require("http");
+```
+
+#### 2. サーバーを作成
+```js
+const server = http.createServer((req, res) => {
+  res.writeHead(200, { "Content-Type": "text/html" });
+  res.write("<h1>Hello World</h1>");
+  res.end();
+});
+```
+- `req`: クライアントからのリクエスト
+- `res`: サーバーからのレスポンス
+- `writeHead()`: ヘッダー（ステータスコードやContent-Type）を送る
+- `write()`: 実際のHTMLデータを送る
+- `end()`: レスポンスを終了する
+
+#### 3. サーバーを起動する
+```js
+server.listen(8000);
+```
+- 一般的なポート番号：`3000`, `8000`, など
+
+---
+
+### 📄 HTML ファイルの返却
+- `index.html` を作成して、サーバーから返す：
+```js
+const fs = require("fs");
+const html = fs.readFileSync("index.html");
+res.write(html);
+```
+
+---
+
+### 🔄 自動再起動：`nodemon` の導入
+```bash
+npm install -g nodemon
+```
+- `nodemon` を使えば、コード変更時にサーバーが自動で再起動される。
+- `npm run dev` に設定することでホットリロードができる。
+
+---
+
+### 🔁（反省）
+- `nodemon` の動作範囲に注意：`.js`ファイルの変更は監視するが、`.html`の変更だけではサーバーは再起動されない。
+- `.html`を読み込む処理を`fs.readFileSync`ではなく**毎回読み込む設計**にするか、`nodemon.json`で`.html`もwatch対象にする必要あり。
+
+-----------------------------------
+
+node.js
+
+4/16 2018-2116
+https://www.youtube.com/watch?v=nSXnif14lVo&list=PLT5klp7W4r8T3DAvFEG6T-xF9j9uKcWyB&index=2
+
+
+
+nodejsとは
+サーバーサイドの設計手法
+クライアントもサーバーも作れる。
+
+nodejs入れてね。node brew,サイトからダウンロードしてね
+nodejs入れたらnpm,yarnが使えるようになる。
+npm-v
+
+package.jsonを作れる。
+npm init -y 
+
+server.jsファイル作成
+node server.jsでファイル実行consolelogでファイル実行できるか確かめる
+npm install —save-dev http httpモジュール使ってみたいから。そうするとpackagejsonふぁいるに追加される。
+
+npm run devで使えるようにscripts:{“dev”:”node server.js”}をpackagejsonに追加しよう。サーバーを建てた。
+
+server.jsに書いていく
+httpもじゅーるとは。　サーバーとクライアントを使用するためのもの。
+require(‘http’)をしなきゃ。
+nodeのドキュメントわかりやすいよね。
+
+createServer()関数でサーバーを作る。res, reqを引数で受け取れる。
+ブラウザからアクセス来た時の処理。を作る。
+writeHeadヘッダーをつくる
+writeで中身を作るh1　helloworkdをかえそう
+endで終わらせる。
+
+listen(PORT)でサーバー起動する。PORTは番号を3000とか8000が普通
+
+＜＜＜＜＜16’30地点
+
+index.htmlを作ってserver.jsのres.writeで帰させる。
+
+require(“fs”).readfilesync(htmlのurl）
+
+
+nom install -g nodemonでホットリロードができる。devをnodemonで実行するようにしてね
+
+反省nodemonの使い方よくわからない。
+
+

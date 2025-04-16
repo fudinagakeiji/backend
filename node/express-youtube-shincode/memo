@@ -1,0 +1,212 @@
+
+## ✅ Express 学習メモまとめ  
+**日付：4/16　時間：22:46〜23:49**
+
+---
+
+### 🔧 セットアップ  
+- `npm i express nodemon`：Express と開発用ツール nodemon をインストール  
+- `server.js` を作成  
+- `package.json` に以下を追加し、`npm run dev` で起動できるように：
+  ```json
+  "scripts": {
+    "dev": "nodemon server.js"
+  }
+  ```
+
+---
+
+### 📦 基本の構成（server.js）  
+```js
+const express = require("express");
+const app = express();
+const PORT = 3000;
+
+app.listen(PORT, () => {
+  console.log("さーばきどうしたよ");
+});
+```
+
+---
+
+### 🌐 各種HTTPメソッド  
+#### GETメソッド
+- ルート（`/`）にアクセスして、レスポンスを返す：
+  ```js
+  app.get("/", (req, res) => {
+    res.send("こんにちは");
+  });
+  ```
+- 他にも：
+  - `res.status(200).send("OK");`
+  - `res.json({ message: "Hello" });`
+
+---
+
+### 📁 ルーティングの共通化（8:05〜）  
+#### ファイル構成例：
+```
+routes/
+  └ user.js
+```
+
+#### user.js
+```js
+const express = require("express");
+const router = express.Router();
+
+router.get("/", (req, res) => {
+  res.send("ユーザーの情報！");
+});
+
+module.exports = router;
+```
+
+#### server.js 側
+```js
+const userRoutes = require("./routes/user");
+app.use("/users", userRoutes);
+```
+
+---
+
+### 🔢 パラメータ付きルート（13:55〜）  
+```js
+router.get("/:id", (req, res) => {
+  res.send(`${req.params.id}の情報をうけとったわん。`);
+});
+```
+
+---
+
+### 🗂 静的ファイルの提供（16:55〜）  
+- `public/` フォルダ内の HTML や CSS をそのまま表示：
+```js
+app.use(express.static("public"));
+```
+
+---
+
+### 📝 テンプレートエンジン（19:40〜）  
+#### セットアップ
+```bash
+npm i ejs
+```
+
+#### server.js
+```js
+app.set("view engine", "ejs");
+
+app.get("/", (req, res) => {
+  res.render("index", { text: "nodejsとexpress" });
+});
+```
+
+#### index.ejs
+```html
+<p><%= text %></p>
+```
+
+---
+
+### 🛡 ミドルウェア（23:30〜）  
+- 共通処理を行う関数。リクエストがルートに届く前に処理できる。
+```js
+app.use(myLogger);
+
+function myLogger(req, res, next) {
+  console.log(req.originalUrl);
+  next(); // 忘れずに！
+}
+```
+
+- 特定のルートだけに使うことも可能：
+```js
+app.use("/users", myLogger);
+```
+
+＝ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+express
+
+4/16 22:46-23:49
+
+nom i express nodemon
+
+server.jsファイル作成
+
+scriptsをrpm run devできるように。
+
+server.js
+require(“express”)
+express();
+PORT
+app.listen(PORT,console.log)
+
+
+いろんなメソッドを受け取る
+
+
+＜get＞
+ルートディレクトリで
+getのリクエストを送る、レスポンスを使う。res.sendでブラウザに返す
+sendstatusも送れる。
+status、sendをチェーンできる。
+.jsonもできる。
+
+他のディレクトリでやってみる。
+
+8:05————————————————
+＜ルート部分の共通部分を作る＞
+routes/user.js
+
+const router = express.Router関数を使う。
+server.jsで使ってたappはここではrouterとする。
+router.get()
+
+module.exprorts. = routerでどこでも使えるようにする
+server.jsで↑これをrequireする
+
+app.useでルーティングする
+13:55——————————————————
+
+ランダムなURLの文字列を入れる、
+user.js
+“/:id”をurlで受け取って、
+res.send(`${request.params.id}の情報をうけとったわん。`
+
+他にもpost,deleteとかもあるけどそれはwebAPIを自作しようという動画を見てね。
+
+
+
+16:55——————————————————
+htmlとか静的なファイルのレンダリングをするよ
+app.use(express.static(“public”) このファイルpublic/index.htmlフォルダの中身を静的に表示するということ。
+cssも当てられるよ。
+
+19:40——————————————————
+
+テンプレートエンジンも当てられる。
+app.set("view engine", "ejs");
+
+$npm i ejs
+
+app.getにこれを付け足す
+res.render("index", { text: "nodejsとexpress" });
+
+
+index.ejsにtextを受け取る
+<%= text %>
+
+23:30——————————————————
+
+ミドルウェア。クライアントがリクエスト送る前にアカウント情報とか認証とか色々サーバーとの間でチェックする仕組み
+
+一番上で宣言してね。
+app.use(mylogger);
+
+function mylogger(req, res, next) {
+  console.log(req.originalUrl);
+  next();
+}
+
+userファイルだけ、”/“だけとかミドルウェア呼ぶ方法があるよ。
