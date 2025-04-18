@@ -1,0 +1,436 @@
+## 🗓 MongoDB学習記録（4/17, 4/18）
+4/17 13:00-14:00
+4/18 7:42-8:57(-16) 21:56-22:46
+https://www.youtube.com/watch?v=JBCykXLfvv0&t=1136s
+
+---
+
+### 🔁 MongoDB概要
+
+- RDBからNoSQLへのシフト
+- JSON形式の「ドキュメント思考」
+- 動的スキーマ設定が可能（柔軟な構造）
+- 大容量データに強く、SQL不要で扱える
+- クライアント → サーバー → DBの構成
+
+---
+
+### 🧱 構築手順
+
+#### 1. 初期セットアップ
+
+```bash
+npm init -y
+npm i express mongoose nodemon
+```
+
+`package.json` に以下追加で `npm run dev` で自動再起動可能:
+
+```json
+"scripts": {
+  "dev": "nodemon server.js"
+}
+```
+
+#### 2. `server.js` 基本構成
+
+```js
+const express = require("express");
+const app = express();
+const mongoose = require("mongoose");
+const foodRouter = require("./routes/foodRoutes");
+
+app.use(foodRouter);
+
+mongoose
+  .connect("mongodb+srv://shincodeyoutube:abc@cluster0.8b8hp.mongodb.net/food?retryWrites=true&w=majority&appName=Cluster0")
+  .then(() => console.log("データベース接続成功したよ"))
+  .catch(err => console.log(err));
+
+app.listen(3000, () => {
+  console.log("さーばきどうしたよ");
+});
+```
+
+---
+
+### 🌱 モデル定義（`models/Food.js`）
+
+```js
+const mongoose = require("mongoose");
+
+const FoodSchema = new mongoose.Schema({
+  name: { type: String, required: true, trim: true, lowercase: true },
+  calories: {
+    type: Number,
+    default: 0,
+    validate(value) {
+      if (value < 0) throw new Error("マイナスのカロリーは存在しないよ");
+    },
+  },
+});
+
+const Food = mongoose.model("Food", FoodSchema);
+module.exports = Food;
+```
+
+---
+
+### 📡 APIルーティング（`routes/foodRoutes.js`）
+
+```js
+const express = require("express");
+const app = express();
+const foodModel = require("../models/Food");
+
+app.use(express.json());
+
+// 取得（GET）
+app.get("/foods", async (req, res) => {
+  try {
+    const foods = await foodModel.find({});
+    res.send(foods);
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
+
+// 作成（POST）
+app.post("/food", async (req, res) => {
+  const food = new foodModel(req.body);
+  try {
+    await food.save();
+    res.send(food);
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
+
+// 更新（PATCH）
+app.patch("/food/:id", async (req, res) => {
+  try {
+    await foodModel.findByIdAndUpdate(req.params.id, req.body);
+    res.send("更新完了");
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
+
+// 削除（DELETE）
+app.delete("/food/:id", async (req, res) => {
+  try {
+    await foodModel.findByIdAndDelete(req.params.id);
+    res.send("削除完了");
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
+
+module.exports = app;
+```
+
+---
+
+### 🛠 トラブルと対応
+
+#### ❌ DNSエラー（ETIMEOUT）
+
+```
+Error: querySrv ETIMEOUT _mongodb._tcp.cluster0.8b8hp.mongodb.net
+```
+
+- 原因：iPhoneテザリングなど一部ネットワーク環境でDNS解決不可
+- 解決：会社Wi-Fiに切り替えたら成功
+
+---
+
+### 🧪 テスト
+
+- Postmanを使ってPOST, GET, PATCH, DELETEを確認
+- MongoDB AtlasのData ExplorerからもDBデータを確認可能
+
+ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+もちろん！以下で `server.js`、`models/Food.js`、`routes/foodRoutes.js` の3つのファイルについて、**初心者にもわかりやすく**1つずつ丁寧に説明していきます。
+
+---
+
+## 🧠 1. `server.js` の解説
+
+```js
+const express = require("express");
+const app = express();
+const mongoose = require("mongoose");
+const foodRouter = require("./routes/foodRoutes");
+
+app.use(foodRouter);
+```
+
+### ✅ 各行の意味
+
+- `express`：
+  - 軽量なWebサーバーフレームワーク。APIサーバーを簡単に作れる。
+- `app = express()`：
+  - Expressのアプリケーションを初期化。
+- `mongoose`：
+  - MongoDBとNode.jsをつなぐライブラリ。DBとやりとりしやすくする。
+- `foodRouter`：
+  - `routes/foodRoutes.js` で定義したルーティングを読み込む。
+- `app.use(foodRouter)`：
+  - ルーティングをアプリケーションに登録する。`GET /foods` などが有効に。
+
+---
+
+```js
+mongoose
+  .connect("mongodb+srv://shincodeyoutube:abc@cluster0.8b8hp.mongodb.net/food?retryWrites=true&w=majority&appName=Cluster0")
+  .then(() => console.log("データベース接続成功したよ"))
+  .catch(err => console.log(err));
+```
+
+- MongoDBに接続する部分
+- `mongoose.connect(...)` に接続文字列（URI）を渡すことで、Atlasに接続
+- `.then()`：成功時のログ
+- `.catch()`：失敗時のエラーログ
+
+---
+
+```js
+app.listen(3000, () => {
+  console.log("さーばきどうしたよ");
+});
+```
+
+- サーバーを3000番ポートで起動
+- このファイルを `node server.js` で実行するとサーバーが立ち上がる
+
+---
+
+## 📦 2. `models/Food.js` の解説
+
+```js
+const mongoose = require("mongoose");
+```
+
+- Mongooseを使うために読み込み
+
+---
+
+```js
+const FoodSchema = new mongoose.Schema({
+  name: { type: String, required: true, trim: true, lowercase: true },
+  calories: {
+    type: Number,
+    default: 0,
+    validate(value) {
+      if (value < 0) throw new Error("マイナスのカロリーは存在しないよ");
+    },
+  },
+});
+```
+
+### 🔍 各項目の意味
+
+- `name`：
+  - データ型は文字列 (`String`)
+  - `required: true` → 入力必須
+  - `trim: true` → 前後の空白を除く
+  - `lowercase: true` → 自動的に小文字に変換
+
+- `calories`：
+  - データ型は数字 (`Number`)
+  - `default: 0` → 何も指定がないときは 0
+  - `validate` → 0未満ならエラーを出す
+
+---
+
+```js
+const Food = mongoose.model("Food", FoodSchema);
+module.exports = Food;
+```
+
+- スキーマを元に `Food` モデルを作成
+- 他ファイルで使えるように `export`
+
+---
+
+## 🛣 3. `routes/foodRoutes.js` の解説
+
+```js
+const express = require("express");
+const app = express();
+const foodModel = require("../models/Food");
+```
+
+- Expressと、先ほど定義した `Food` モデルを読み込む
+
+---
+
+```js
+app.use(express.json());
+```
+
+- `req.body` をJSONとして受け取れるようにするミドルウェア（POSTやPATCHのとき必須）
+
+---
+
+### GETリクエスト
+
+```js
+app.get("/foods", async (req, res) => {
+  try {
+    const foods = await foodModel.find({});
+    res.send(foods);
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
+```
+
+- すべての食品データを取得して返す
+
+---
+
+### POSTリクエスト（新規追加）
+
+```js
+app.post("/food", async (req, res) => {
+  const food = new foodModel(req.body);
+  try {
+    await food.save();
+    res.send(food);
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
+```
+
+- 新しい食品データを追加（`req.body`の内容を保存）
+
+---
+
+### PATCHリクエスト（部分修正）
+
+```js
+app.patch("/food/:id", async (req, res) => {
+  try {
+    await foodModel.findByIdAndUpdate(req.params.id, req.body);
+    res.send("更新完了");
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
+```
+
+- `:id` で指定したデータの一部を修正
+- `req.body` の内容に従って更新
+
+---
+
+### DELETEリクエスト（削除）
+
+```js
+app.delete("/food/:id", async (req, res) => {
+  try {
+    await foodModel.findByIdAndDelete(req.params.id);
+    res.send("削除完了");
+  } catch (err) {
+    res.status(500).send(err);
+  }
+});
+```
+
+- `:id` で指定されたデータを削除
+
+---
+
+## 🧪 テスト方法（Postman）
+
+- `GET /foods`：全データ取得
+- `POST /food`：新規作成  
+  例:  
+  ```json
+  {
+    "name": "apple",
+    "calories": 95
+  }
+  ```
+- `PATCH /food/<id>`：部分更新
+- `DELETE /food/<id>`：削除
+
+---
+
+ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+MongoDB 4/17 13:00-14:00　4/18 7:42-8:57(-16) 21:56-22:46
+https://www.youtube.com/watch?v=JBCykXLfvv0&t=1136s
+
+RDB→NoSQL
+Json形式　ドキュメント思考
+
+動的スキーマ設定
+大容量データでも捌ける
+SQL文知らなくても使える。
+
+クライアント→サーバー→DB
+
+6’00================
+
+server.js
+
+npm init -y
+
+mondooseはexpressとDBを繋ぐ
+npm i express mongoose nodemon
+
+run devでnodmon使えるようにする。
+
+express =require
+app =express()
+mongoose =require
+
+app.listen(3000,()=>{log}
+
+9’00================
+データ作るよ
+
+mongodb hotmailアカウント
+shincodeyoutube:abc
+
+11’40？？？database deploymentがわからない
+
+スキーマ構造を作成する
+models/Food.js
+
+16’10＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+データベース接続
+
+DNS接続がうまくいかない iphoneのテザリングは無理。DNSの設定を8888とかにするのもgoogleのを使うのも無理。
+→会社のwifi使ったらいけた。
+——————
+Error: querySrv ETIMEOUT _mongodb._tcp.cluster0.8b8hp.mongodb.net
+    at QueryReqWrap.onresolve [as oncomplete] (node:internal/dns/promises:251:17) {
+  errno: undefined,
+  code: 'ETIMEOUT',
+  syscall: 'querySrv',
+  hostname: '_mongodb._tcp.cluster0.8b8hp.mongodb.net'
+}
+———————
+20’00＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+ルート設定
+foodRoutes.js
+async
+try catch
+
+上のを使えるようにするためにapp.useをserver.jsしなきゃいけない
+
+postメソッドを作る。
+
+json形式でpostできるようにfoodRoutes.jsに書き込む。
+
+postmanを使って、postして、それをgetする
+31’00＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+データ部分修正PATCH
+foodRoutes.js
+idを指定して修正できるようにする。patch
+findByIdANdUpdate関数を使う
+
+MongoDBの管理サイトでもデータを確認できる。clusterのData explorerに行けば見れる
