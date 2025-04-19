@@ -1,0 +1,142 @@
+4/19 11:25-12：20
+以下は、4/19の学習内容とコードを要点ごとにまとめたものです。動画で学んだExpressを使ったRESTful APIの基本と、コードに対応する内容をコンパクトに整理しました。
+
+🧠 学習内容まとめ：RESTful Web API入門（Express編）
+🔧 環境構築と基本コード
+* index.js 作成、express インストール
+* express.json() でJSONパース
+* app.listen() でサーバー起動
+* app.get("/", ...) でトップページ表示
+const express = require("express");
+const app = express();
+app.use(express.json());
+app.listen(3000, console.log("サーバ起動した"));
+
+👥 データ構造（配列で管理）
+const customers = [
+  { name: "keiji", id: 1 },
+  { name: "reiji", id: 2 },
+  { name: "airi", id: 3 },
+  { name: "eiri", id: 4 },
+];
+
+🔁 CRUD操作の実装
+✅ Read (取得)
+一覧取得（GET）
+app.get("/api/customers", (req, res) => {
+  res.send(customers);
+});
+特定ID取得（GET + params）
+app.get("/api/customer/:id", (req, res) => {
+  const customer = customers.find(c => c.id === parseInt(req.params.id));
+  res.send(customer);
+});
+
+➕ Create（POST）
+app.post("/api/customers", (req, res) => {
+  const customer = { name: req.body.name, id: customers.length + 1 };
+  customers.push(customer);
+  res.send(customers);
+});
+* ブラウザからはGETしか使えない → Postmanで送信
+* app.use(express.json()) を忘れるとPOSTの req.body が使えない
+
+🛠️ Update（PUT）
+app.put("/api/customer/:id", (req, res) => {
+  const customer = customers.find(c => c.id === parseInt(req.params.id));
+  customer.name = req.body.name;
+  res.send(customer);
+});
+
+❌ Delete（DELETE）
+app.delete("/api/customer/:id", (req, res) => {
+  const customer = customers.find(c => c.id === parseInt(req.params.id));
+  const index = customers.indexOf(customer);
+  customers.splice(index, 1);
+  res.send(customer);
+});
+
+🌍 RESTの4原則（RESTful設計）
+#	名前	内容	例
+1	アドレス可能性 (Addressability)	資源ごとにエンドポイントがある	/api/customers/1
+2	統一インターフェース (Uniform Interface)	GET/POST/PUT/DELETEで操作	app.get, app.post など
+3	ステートレス性 (Stateless)	リクエストに必要な情報を毎回含める	サーバーはクライアント状態を保持しない
+4	接続性 (Connectability)	APIがリンクしやすい設計	JSONリンクやルーティングしやすさ
+
+ーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーーー
+【WebAPI入門】RESTfulなWebAPIを自作してAPIを理解しよう ~WebAPI入門~
+https://www.youtube.com/watch?v=9HXcaDQyWxA
+
+expressの環境を作るindex.js
+
+app.get res.sendで試す
+
+8’00ーーーーーーーーーーーーーーーーーー
+サーバを立てて、データ作る
+
+配列でデータ持つ。
+
+データを取得できるようにするCRUD
+app.get　
+
+get :idで指定したのを取得findメソッド、params,
+
+16:00—送信する
+post
+
+データの型に沿って作成して、pushしてあげる。
+ただブラウザにurl入れるだけだとgetメソッドになっちゃうから本来はformを用意してsubmitボタン押す。でもめんどいからPOSTMAN使ってやろうね
+app.use express jsonしてあげないとだめ。
+
+22’35———————putメソッドで更新する
+idで取得したのとほぼ同じ。titleだけ変更しようね。
+
+delete
+indexOfでidを取得してsplice関数で削除する
+
+
+
+4大ルール
+1.アドレス可能性addressability
+endpointを自分で決めたURLで指定できた。
+
+
+2.統一インターフェースuniformInterface
+統一されたHTTPメソッドでやりとりできた
+
+3.ステートレス性stateless
+クライアントで情報を持たない状態でサーバーが情報を持ってやりとりできた。
+
+
+
+
+
+
+
+
+
+————————————
+REST APIを超分かりやすく図解で説明します ~RESTfulなAPI設計とは~
+https://www.youtube.com/watch?v=rEGmSRZ-dWY
+
+設計手法。
+Representative 代表的な
+State状態
+Transfer転送
+
+4大ルール
+1.アドレス可能性addressability
+クライアントーAPIーサーバー
+お客ーウェイターー厨房
+
+2.統一インターフェースuniformInterface
+クライアント→GETPOSTPUTDELETEのHTTPメソッドを使おうね。
+JSON形式で返すよ←サーバー
+3.ステートレス性stateless
+状態を持たない。クライアントの情報をもたないように設計する
+
+例）行きつけの美容室で毎回ショートカットを記憶する。のが情報を持つ。
+毎回ショートカットと頼まなければならない。けど拡張性が大きいい。
+
+4.接続性connectabilityb
+リンクとか楽。
